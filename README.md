@@ -2,7 +2,7 @@
 
 **One iOS agent feature, two deployment topologies.** A Swift package for B2B apps whose customers run an agent service either on Anthropic's hosted platform or *self-hosted inside their own perimeter*, each on its own release schedule. The app talks to a fleet of servers it does not operate, all on different versions, and has to behave correctly against every one of them.
 
-Demo app: (added after the companion repo is pushed — see below)
+**Demo app:** [agent-topology-demo-app](https://github.com/rajatslakhina/agent-topology-demo-app). A SwiftUI app with five tenants that consumes this package as a remote dependency (`from: "1.0.0"`), with screenshots from a Simulator run.
 
 ---
 
@@ -157,7 +157,20 @@ switch await sync.pump() { /* applied / rebased(retractAfter:) / resyncRequired 
 
 ## Verification
 
-_Pending: written from the real results once the first CI runs have finished._
+What was actually run, and what it showed:
+
+- **CI** ([Actions](https://github.com/rajatslakhina/agent-topology-kit/actions)), on every push and tag:
+  - *Linux:* `swift:6.0` container, clean `swift build --build-tests -Xswiftc -warnings-as-errors`, then `swift test`.
+  - *macOS (`macos-15`, Xcode 16.4 on the first run):* `swift test -Xswiftc -warnings-as-errors`, then `xcodebuild build` of both products for `generic/platform=iOS Simulator`, with warnings treated as errors.
+  - *Mutation:* `scripts/mutation-check.sh` in `swift:6.0`. The first run on `main` passed all three jobs: 63 tests, and 28/28 mutants caught.
+- **Locally:**
+  - *macOS (Xcode 27.2, Swift 6.4.2):* clean `swift build --build-tests -Xswiftc -warnings-as-errors` with 0 warnings, then 63/63 tests.
+  - *Linux (Docker `swift:6.0`, Swift 6.0.3):* the same build, 63/63 tests, and 28/28 mutants caught.
+- **Simulator:** the companion demo app was built against this package resolved from GitHub at `1.0.0`, with 0 Swift warnings. It was installed on an iOS 27.2 Simulator (iPhone 18 Pro) and launched six times with launch arguments through `xcrun simctl launch`, with no taps. Each process was confirmed running about 12 s after launch. Its screenshots come from that run.
+- **Not verified:**
+  - `AgentTopologyUI` has no unit tests.
+  - No interactive taps were made.
+  - The adapters have never talked to a real hosted or self-hosted deployment, since the wire format is illustrative.
 
 ## License
 
